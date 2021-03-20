@@ -27,28 +27,55 @@ def sitemap():
 
 @app.route('/members', methods=['GET'])
 def handle_hello():
+    try:
+        members = jackson_family.get_all_members()
+        return jsonify(members), 200
+    except:
+        return jsonify('error'), 500
 
-    # this is how you can use the Family datastructure by calling its methods
-    members = jackson_family.get_all_members()
-    response_body = {
-        "hello": "world",
-        "family": members
-    }
-@app.route("/add/members",methods=["POST"])
-def add_member():
-    body=request.get_json()
-    jackson_family.add_member(body)
-    return jsonify(jackson_family),200
+@app.route('/member/<int:id>', methods=['GET'])
+def get_single_member(id):
+    user = jackson_family.get_member(id)
+    if user:
+        return user, 200
+    return 404
+   
 
-@app.route("/members/<int:id>", methods=["DELETE"])
+@app.route('/member', methods=["POST"])
+def cretate_member():
+    try:
+        member = {
+            "id": request.json["id"],
+            "first_name": request.json["first_name"],
+            "last_name": "Jackson",
+            "age": request.json["age"],
+            "lucky_numbers": request.json["lucky_numbers"]
+        }
+        create = jackson_family.add_member(member)
+        if(create == 200):
+            return jsonify('All good!'), 200
+
+    except ValueError as err:
+        print('VALUES ERROR', err)
+        return jsonify('ERROR'), 500
+
+    except Exception as err:
+        print('IOS ERROR', err)
+        return jsonify('Not good request'), 405
+
+    except:
+        print('Except')
+        return jsonify('Error'), 500
+
+@app.route('/member/<int:id>', methods=["DELETE"])
 def delete_member(id):
-    jackson_family.delete_member(id)
-    return jsonify (jackson_family,"Deleted"),200
+    user = jackson_family.delete_member(id)
+    print(user)
+    if user:
+        return jsonify({"done": True}), 200
+    
+    return jsonify('Not good request'), 404
 
-@app.route("/members/<int:id>", methods=['GET'])
-def get_member_by_id(id):
-    get_member = jackson_family.get_member_by_id(id)
-    return jsonify(get_member),200
 
 # this only runs if `$ python src/app.py` is executed
 if __name__ == '__main__':
